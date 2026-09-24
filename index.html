@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Modern Glass Calculator</title>
+  <style>
+    :root {
+      --bg1: #eef2ff;
+      --bg2: #f8fafc;
+      --panel: rgba(255, 255, 255, 0.58);
+      --panel-border: rgba(255, 255, 255, 0.7);
+      --display-bg: rgba(255, 255, 255, 0.2);
+      --display-text: #0f172a;
+      --key-bg: rgba(255,255,255,0.55);
+      --key-text: #0f172a;
+      --key-hover: rgba(255,255,255,0.8);
+      --operator-bg: linear-gradient(135deg, #8b5cf6, #6366f1);
+      --equal-bg: linear-gradient(135deg, #10b981, #34d399);
+      --clear-bg: linear-gradient(135deg, #fb7185, #ef4444);
+      --shadow: rgba(15, 23, 42, 0.18);
+      --muted: #64748b;
+      --glass: rgba(15, 23, 42, 0.55);
+      --glass-text: #f8fafc;
+      --toggle-bg: rgba(255, 255, 255, 0.25);
+      --danger: #ef4444;
+    }
+
+    body.dark {
+      --bg1: #090d1a;
+      --bg2: #111827;
+      --panel: rgba(15, 23, 42, 0.62);
+      --panel-border: rgba(255,255,255,0.12);
+      --display-bg: rgba(255,255,255,0.06);
+      --display-text: #f8fafc;
+      --key-bg: rgba(255,255,255,0.07);
+      --key-text: #f8fafc;
+      --key-hover: rgba(255,255,255,0.14);
+      --operator-bg: linear-gradient(135deg, #8b5cf6, #6366f1);
+      --equal-bg: linear-gradient(135deg, #10b981, #34d399);
+      --clear-bg: linear-gradient(135deg, #fb7185, #ef4444);
+      --shadow: rgba(2, 6, 23, 0.6);
+      --muted: #94a3b8;
+      --glass: rgba(17,24,39,0.7);
+      --glass-text: #f8fafc;
+      --toggle-bg: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(167, 139, 250, 0.7), transparent 30%),
+        radial-gradient(circle at 85% 85%, rgba(103, 232, 249, 0.6), transparent 25%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      transition: background 0.25s ease;
+    }
+
+    .calculator {
+      width: min(100%, 420px);
+      padding: 20px;
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(28px) saturate(150%);
+      -webkit-backdrop-filter: blur(28px) saturate(150%);
+      box-shadow: 0 30px 80px var(--shadow);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 10px;
+    }
+
+    .brand {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.8);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-toggle {
+      width: 46px;
+      height: 42px;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      background: var(--toggle-bg);
+      color: var(--key-text);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .profile-area {
+      position: relative;
+    }
+
+    .profile-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      background: var(--toggle-bg);
+      color: var(--key-text);
+      padding: 6px 10px 6px 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+    }
+
+    .profile-name {
+      max-width: 90px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .profile-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: min(260px, 75vw);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: 0 20px 40px var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 10;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .large-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .profile-menu strong,
+    .profile-menu small {
+      display: block;
+    }
+
+    .profile-menu small {
+      color: var(--muted);
+      margin-top: 3px;
+      font-size: 0.75rem;
+    }
+
+    .profile-role {
+      margin: 12px 0;
+      padding: 8px 10px;
+      border-radius: 10px;
+      color: var(--muted);
+      background: var(--display-bg);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .developer-options {
+      padding-top: 10px;
+      border-top: 1px solid var(--panel-border);
+      margin-top: 12px;
+    }
+
+    .menu-label {
+      color: #8b5cf6;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.7rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .profile-menu button {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--key-text);
+      text-align: left;
+      padding: 10px 8px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .profile-menu button:hover {
+      background: var(--key-hover);
+    }
+
+    .logout-button {
+      border-top: 1px solid var(--panel-border) !important;
+      color: var(--danger) !important;
+      margin-top: 10px !important;
+    }
+
+    .display-box {
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 18px 16px;
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      background: var(--display-bg);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+    }
+
+    .expression {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 1rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      width: 100%;
+      text-align: right;
+    }
+
+    .display {
+      width: 100%;
+      text-align: right;
+      font-size: clamp(2.3rem, 8vw, 3.5rem);
+      line-height: 1;
+      font-weight: 300;
+      letter-spacing: -0.06em;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--display-text);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 22px;
+      min-height: 68px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: var(--key-bg);
+      color: var(--key-text);
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.2s ease;
+      box-shadow: 0 8px 18px rgba(15,23,42,0.08);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:hover { background: var(--key-hover); }
+    button:active { transform: scale(0.97); }
+
+    .operator {
+      background: var(--operator-bg);
+      color: white;
+    }
+
+    .equals {
+      background: var(--equal-bg);
+      color: white;
+      grid-column: span 2;
+    }
+
+    .clear {
+      background: var(--clear-bg);
+      color: white;
+    }
+
+    .zero {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 430px) {
+      .calculator { padding: 16px; }
+      .buttons { gap: 10px; }
+      button { min-height: 62px; border-radius: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="topbar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        Glass Calc
+      </div>
+
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">🌙</button>
+
+        <div class="profile-area">
+          <button class="profile-button" id="profileButton" type="button" aria-expanded="false">
+            <span class="avatar" id="avatar">U</span>
+            <span class="profile-name" id="profileName">User</span>
+            <span>⌄</span>
+          </button>
+
+          <div class="profile-menu" id="profileMenu" hidden>
+            <div class="profile-header">
+              <span class="large-avatar" id="largeAvatar">U</span>
+              <div>
+                <strong id="menuName">User</strong>
+                <small id="menuEmail">user@example.com</small>
+              </div>
+            </div>
+
+            <div class="profile-role" id="profileRole">Standard user</div>
+
+            <div class="developer-options" id="developerOptions" hidden>
+              <div class="menu-label">Developer tools</div>
+              <button type="button" data-dev-action="inspect">🔍 Inspect</button>
+              <button type="button" data-dev-action="debug">🐞 Debug</button>
+            </div>
+
+            <button class="logout-button" type="button">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="display-box">
+      <div class="expression" id="expression"></div>
+      <div class="display" id="display">0</div>
+    </div>
+
+    <div class="buttons">
+      <button class="clear" data-action="clear" type="button">AC</button>
+      <button data-action="delete" type="button">⌫</button>
+      <button class="operator" data-value="%" type="button">%</button>
+      <button class="operator" data-value="/" type="button">÷</button>
+
+      <button data-value="7" type="button">7</button>
+      <button data-value="8" type="button">8</button>
+      <button data-value="9" type="button">9</button>
+      <button class="operator" data-value="*" type="button">×</button>
+
+      <button data-value="4" type="button">4</button>
+      <button data-value="5" type="button">5</button>
+      <button data-value="6" type="button">6</button>
+      <button class="operator" data-value="-" type="button">−</button>
+
+      <button data-value="1" type="button">1</button>
+      <button data-value="2" type="button">2</button>
+      <button data-value="3" type="button">3</button>
+      <button class="operator" data-value="+" type="button">+</button>
+
+      <button class="zero" data-value="0" type="button">0</button>
+      <button data-value="." type="button">.</button>
+      <button class="equals" data-action="calculate" type="button">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById("display");
+    const expression = document.getElementById("expression");
+    const themeToggle = document.getElementById("themeToggle");
+
+    let currentValue = "0";
+    let previousExpression = "";
+
+    function renderDisplay() {
+      display.textContent = currentValue;
+      expression.textContent = previousExpression;
+    }
+
+    function isOperator(value) {
+      return ["+", "-", "*", "/", "%"].includes(value);
+    }
+
+    function appendValue(value) {
+      if (currentValue === "Error") currentValue = "0";
+
+      if (value === ".") {
+        const lastNumber = currentValue.split(/[+\-*/%]/).pop();
+        if (lastNumber.includes(".")) return;
+        if (currentValue === "0") {
+          currentValue = "0.";
+        } else {
+          currentValue += ".";
+        }
+        renderDisplay();
+        return;
+      }
+
+      if (isOperator(value)) {
+        if (currentValue === "0" && value !== "-") return;
+
+        const lastChar = currentValue[currentValue.length - 1];
+        if (isOperator(lastChar)) {
+          currentValue = currentValue.slice(0, -1);
+        }
+
+        if (value === "%" && currentValue === "0") return;
+        currentValue += value;
+        renderDisplay();
+        return;
+      }
+
+      if (currentValue === "0") {
+        currentValue = value;
+      } else {
+        currentValue += value;
+      }
+
+      renderDisplay();
+    }
+
+    function deleteLast() {
+      if (currentValue.length <= 1) {
+        currentValue = "0";
+      } else {
+        currentValue = currentValue.slice(0, -1);
+      }
+      renderDisplay();
+    }
+
+    function clearAll() {
+      currentValue = "0";
+      previousExpression = "";
+      renderDisplay();
+    }
+
+    function calculateResult() {
+      if (currentValue === "Error" || currentValue === "") return;
+
+      try {
+        const safe = currentValue
+          .replace(/×/g, "*")
+          .replace(/÷/g, "/")
+          .replace(/%/g, "/100");
+
+        if (!/^[0-9+\-*/.()% ]+$/.test(safe)) {
+          throw new Error("Invalid");
+        }
+
+        const result = Function(`"use strict"; return (${safe})`)();
+
+        if (!Number.isFinite(result)) {
+          throw new Error("Invalid");
+        }
+
+        previousExpression = currentValue + " =";
+        currentValue = String(Number(result.toFixed(10)));
+        renderDisplay();
+      } catch {
+        previousExpression = "";
+        currentValue = "Error";
+        renderDisplay();
+      }
+    }
+
+    document.querySelectorAll("[data-value]").forEach(button => {
+      button.addEventListener("click", () => appendValue(button.dataset.value));
+    });
+
+    document.querySelectorAll("[data-action]").forEach(button => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        if (action === "clear") clearAll();
+        if (action === "delete") deleteLast();
+        if (action === "calculate") calculateResult();
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key;
+
+      if (/[0-9]/.test(key)) appendValue(key);
+      else if (key === ".") appendValue(".");
+      else if (key === "+") appendValue("+");
+      else if (key === "-") appendValue("-");
+      else if (key === "*") appendValue("*");
+      else if (key === "/") appendValue("/");
+      else if (key === "%") appendValue("%");
+      else if (key === "Enter" || key === "=") calculateResult();
+      else if (key === "Backspace") deleteLast();
+      else if (key === "Escape") clearAll();
+    });
+
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      themeToggle.textContent = isDark ? "☀️" : "🌙";
+    });
+
+    const currentUser = {
+      name: "Alex User",
+      email: "alex@example.com",
+      role: "developer"
+    };
+
+    const profileButton = document.getElementById("profileButton");
+    const profileMenu = document.getElementById("profileMenu");
+    const avatar = document.getElementById("avatar");
+    const largeAvatar = document.getElementById("largeAvatar");
+    const profileName = document.getElementById("profileName");
+    const menuName = document.getElementById("menuName");
+    const menuEmail = document.getElementById("menuEmail");
+    const profileRole = document.getElementById("profileRole");
+    const developerOptions = document.getElementById("developerOptions");
+
+    function initials(name) {
+      return name.split(" ").map(part => part[0]).join("").slice(0,2).toUpperCase();
+    }
+
+    function setupProfile() {
+      const isDeveloper = currentUser.role === "developer";
+      const initial = initials(currentUser.name);
+
+      avatar.textContent = initial;
+      largeAvatar.textContent = initial;
+      profileName.textContent = currentUser.name;
+      menuName.textContent = currentUser.name;
+      menuEmail.textContent = currentUser.email;
+      profileRole.textContent = isDeveloper ? "Developer account" : "Standard user";
+      developerOptions.hidden = !isDeveloper;
+    }
+
+    profileButton.addEventListener("click", () => {
+      const open = profileMenu.hidden;
+      profileMenu.hidden = !open;
+      profileButton.setAttribute("aria-expanded", String(open));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".profile-area")) {
+        profileMenu.hidden = true;
+        profileButton.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    document.querySelectorAll("[data-dev-action]").forEach(button => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.devAction;
+        if (action === "inspect") {
+          alert("Developer inspection enabled.");
+          console.log("Inspection mode on");
+        }
+        if (action === "debug") {
+          alert("Debug mode toggled.");
+        }
+      });
+    });
+
+    setupProfile();
+    renderDisplay();
+  </script>
+</body>
+</html>
